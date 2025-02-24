@@ -58,7 +58,7 @@ const Login = () => {
             gutterBottom
             sx={{ color: theme.palette.primary.main }}
           >
-            Login to Finance Tracker
+            Login to Finance Manager
           </Typography>
           {error && (
             <Alert severity="error" sx={{ mb: 2 }}>

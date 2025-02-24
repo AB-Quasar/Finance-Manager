@@ -55,7 +55,7 @@ const Layout = ({ children }) => {
     <div>
       <Toolbar>
         <Typography variant="h6" noWrap>
-          Finance Tracker
+          Finance Manager
         </Typography>
       </Toolbar>
       <Divider />
@@ -99,7 +99,7 @@ const Layout = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Finance Tracker
+            Finance Manager
           </Typography>
           <IconButton color="inherit" onClick={toggleDarkMode}>
             {darkMode ? <LightModeIcon /> : <DarkModeIcon />}

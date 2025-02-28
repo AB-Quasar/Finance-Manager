@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { mockAuthService } from '../services/mockDataService';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -13,8 +13,13 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Check for token in localStorage
+    const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
+    
+    if (token && savedUser) {
+      // Set default axios auth header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(JSON.parse(savedUser));
     }
     setLoading(false);
@@ -22,30 +27,55 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const userData = await mockAuthService.login(email, password);
-      setUser(userData);
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email,
+        password,
+      });
+      
+      const { token, user } = response.data;
+      
+      // Save both token and user data
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Set default axios auth header
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      setUser(user);
       setError(null);
-      return userData;
+      return user;
     } catch (error) {
-      setError('Invalid credentials');
-      throw new Error('Invalid credentials');
+      console.error('Login error:', error);
+      const message = error.response?.data?.message || 'Failed to login';
+      setError(message);
+      throw new Error(message);
     }
   };
 
   const register = async (username, email, password) => {
     try {
-      const userData = await mockAuthService.register(username, email, password);
+      const response = await axios.post('http://localhost:5000/api/auth/register', {
+        username,
+        email,
+        password,
+      });
+      
+      const { token, user: userData } = response.data;
+      localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
       setError(null);
       return userData;
     } catch (error) {
-      setError('Registration failed');
-      throw new Error('Registration failed');
+      const message = error.response?.data?.message || 'Failed to register';
+      setError(message);
+      throw new Error(message);
     }
   };
 
   const logout = () => {
-    mockAuthService.logout();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     setError(null);
   };

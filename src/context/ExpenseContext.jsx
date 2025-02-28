@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback } from 'react';
-import { mockExpenseService } from '../services/mockDataService';
+import { getExpenses, getExpenseStatistics } from '../services/expenseService';
 
 const ExpenseContext = createContext();
 
@@ -9,46 +9,44 @@ export const ExpenseProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(async (dateRange) => {
     try {
       setLoading(true);
-      const data = await mockExpenseService.getExpenses();
+      const data = await getExpenses(dateRange);
       setExpenses(data);
       return data;
     } catch (err) {
-      setError('Failed to fetch expenses');
+      setError(err.message || 'Failed to fetch expenses');
       throw err;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchStats = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await mockExpenseService.getExpenseStatistics();
-      setStats(data);
-      return data;
-    } catch (err) {
-      setError('Failed to fetch statistics');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const refreshData = useCallback(async () => {
+  const fetchStats = useCallback(async (dateRange) => {
     try {
       setLoading(true);
       setError(null);
+      const data = await getExpenseStatistics(dateRange);
+      setStats(data);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Failed to fetch statistics');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refreshData = useCallback(async (dateRange) => {
+    try {
+      setLoading(true);
       await Promise.all([
-        fetchExpenses(),
-        fetchStats()
+        fetchExpenses(dateRange),
+        fetchStats(dateRange)
       ]);
     } catch (err) {
-      const errorMessage = err.message || 'Failed to refresh data';
-      setError(errorMessage);
-      console.error('Error refreshing data:', err);
+      setError(err.message || 'Failed to refresh data');
     } finally {
       setLoading(false);
     }

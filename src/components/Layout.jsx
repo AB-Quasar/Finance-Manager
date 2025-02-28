@@ -86,7 +86,10 @@ const Layout = ({ children }) => {
     <Box sx={{ display: 'flex' }}>
       <AppBar
         position="fixed"
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+        }}
       >
         <Toolbar>
           <IconButton
@@ -103,6 +106,9 @@ const Layout = ({ children }) => {
           </Typography>
           <IconButton color="inherit" onClick={toggleDarkMode}>
             {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+          <IconButton color="inherit" onClick={handleLogout}>
+            <Logout />
           </IconButton>
         </Toolbar>
       </AppBar>

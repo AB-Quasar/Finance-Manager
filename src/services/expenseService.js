@@ -1,21 +1,31 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api/expenses';
 
 // Helper function to get auth header
 const getAuthHeader = () => {
   const token = localStorage.getItem('token');
   return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
   };
 };
 
 export const getExpenses = async (filters = {}) => {
   try {
-    const response = await axios.get(`${API_URL}/expenses`, {
-      params: filters,
-      headers: getAuthHeader()
+    const params = {};
+    if (filters.startDate) {
+      params.startDate = filters.startDate.toISOString();
+    }
+    if (filters.endDate) {
+      params.endDate = filters.endDate.toISOString();
+    }
+
+    const response = await axios.get(API_URL, {
+      ...getAuthHeader(),
+      params
     });
     return response.data;
   } catch (error) {
@@ -24,11 +34,12 @@ export const getExpenses = async (filters = {}) => {
   }
 };
 
-export const getExpenseStatistics = async (timeframe = 'month') => {
+export const getExpenseStatistics = async (dateRange = {}) => {
   try {
-    const response = await axios.get(`${API_URL}/expenses/statistics`, {
-      params: { timeframe },
-      headers: getAuthHeader()
+    const params = { ...dateRange };
+    const response = await axios.get(`${API_URL}/statistics`, {
+      ...getAuthHeader(),
+      params
     });
     return response.data;
   } catch (error) {
@@ -39,9 +50,7 @@ export const getExpenseStatistics = async (timeframe = 'month') => {
 
 export const createExpense = async (expenseData) => {
   try {
-    const response = await axios.post(`${API_URL}/expenses`, expenseData, {
-      headers: getAuthHeader()
-    });
+    const response = await axios.post(API_URL, expenseData, getAuthHeader());
     return response.data;
   } catch (error) {
     console.error('Create expense error:', error);
@@ -51,9 +60,7 @@ export const createExpense = async (expenseData) => {
 
 export const updateExpense = async (id, expenseData) => {
   try {
-    const response = await axios.put(`${API_URL}/expenses/${id}`, expenseData, {
-      headers: getAuthHeader()
-    });
+    const response = await axios.put(`${API_URL}/${id}`, expenseData, getAuthHeader());
     return response.data;
   } catch (error) {
     console.error('Update expense error:', error);
@@ -63,9 +70,7 @@ export const updateExpense = async (id, expenseData) => {
 
 export const deleteExpense = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/expenses/${id}`, {
-      headers: getAuthHeader()
-    });
+    const response = await axios.delete(`${API_URL}/${id}`, getAuthHeader());
     return response.data;
   } catch (error) {
     console.error('Delete expense error:', error);

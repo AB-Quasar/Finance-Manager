@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Grid,
   Paper,
@@ -7,6 +7,10 @@ import {
   CircularProgress,
   Alert,
   Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, CartesianGrid, Cell } from 'recharts';
 import { useExpense } from '../context/ExpenseContext';
@@ -31,17 +35,44 @@ const Dashboard = () => {
     error,
     refreshData 
   } = useExpense();
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  const getPastMonths = () => {
+    const months = [];
+    const today = new Date();
+    
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = date.toLocaleString('default', { 
+        month: 'long',
+        year: 'numeric'
+      });
+      
+      months.push({
+        value: monthValue,
+        label: monthLabel
+      });
+    }
+    return months;
+  };
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        await refreshData();
+        const [year, month] = selectedMonth.split('-');
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0);
+        await refreshData({ startDate, endDate });
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       }
     };
     loadData();
-  }, [refreshData]);
+  }, [selectedMonth, refreshData]);
 
   if (loading) {
     return (
@@ -70,59 +101,52 @@ const Dashboard = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h4">Dashboard</Typography>
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Select Month</InputLabel>
+          <Select
+            value={selectedMonth}
+            label="Select Month"
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            {getPastMonths().map((month) => (
+              <MenuItem key={month.value} value={month.value}>
+                {month.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
       <Grid container spacing={3}>
         {/* Summary Cards */}
         <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: 140,
-            }}
-          >
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Total Expenses (This Month)
+              Total Expenses
             </Typography>
-            <Typography variant="h4" component="div">
-              {formatCurrency(stats?.monthlyTotal || 0)}
+            <Typography variant="h4">
+              {formatCurrency(stats?.summary?.total || 0)}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: 140,
-            }}
-          >
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Average Daily Expense
+              Daily Average
             </Typography>
-            <Typography variant="h4" component="div">
-              {formatCurrency(stats?.dailyAverage || 0)}
+            <Typography variant="h4">
+              {formatCurrency(stats?.summary?.average || 0)}
             </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              p: 2,
-              display: 'flex',
-              flexDirection: 'column',
-              height: 140,
-            }}
-          >
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              Highest Expense Category
+              Total Transactions
             </Typography>
-            <Typography variant="h4" component="div">
-              {stats?.topCategory || 'N/A'}
+            <Typography variant="h4">
+              {stats?.summary?.count || 0}
             </Typography>
           </Paper>
         </Grid>
